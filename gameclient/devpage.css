@@ -1,0 +1,56 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: white;
+}
+
+.view {
+    background-color: white;
+    margin: 0 auto;
+    padding: 0;
+    width: 800px;
+}
+
+.header, .footer {
+    background-color: white;
+    margin: 0;
+    padding: 5px;
+    color: black;
+    height: 20px;
+}
+
+.column {
+    float: left;
+    margin: 0;
+    padding: 0;
+}
+
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+.game {
+    margin: 0;
+    padding: 0;
+    background-color: black;
+    width: 512px;
+    height: 384px;
+}
+
+.chat {
+    margin: 0;
+    padding: 5px;
+    float: right;
+    background-color: silver;
+    width: 278px;
+    height: 374px;
+}
+
+.console {
+    margin: 0;
+    padding: 5px;
+    background-color: grey;
+    height: 116px;
+}
