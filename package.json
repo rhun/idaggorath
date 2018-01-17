@@ -1,0 +1,22 @@
+{
+  "name": "@idaggorath/gameserver",
+  "version": "1.0.0",
+  "description": "iDaggorath Game Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rhun/idaggorath.git"
+  },
+  "keywords": [
+    "daggorath"
+  ],
+  "author": "Richard Hunerlach <rhuner@gmail.com> (https://idaggorath.wordpress.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rhun/idaggorath/issues"
+  },
+  "homepage": "https://github.com/rhun/idaggorath#readme"
+}
