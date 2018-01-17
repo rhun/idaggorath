@@ -1,7 +1,7 @@
 {
-  "name": "@idaggorath/gameserver",
+  "name": "idaggorath",
   "version": "1.0.0",
-  "description": "iDaggorath Game Server",
+  "description": "iDaggorath Online Game",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
