@@ -1,5 +1,6 @@
 'use strict'
 
+const debug = require('./debug.js')
 const express = require('express')
 const http = require('http')
 const socketio = require('socket.io')
@@ -10,17 +11,18 @@ const app = express()
 const server = http.Server(app)
 const io = socketio(server)
 
+const DodGame = require('./dodgame.js')
+const dodGame = new DodGame()
+
 const port = 58181
 const root = path.join(__dirname, '../gameclient')
 
 server.listen(port)
-
-console.log('Static root is: ' + root)
-console.log('Listening on port ' + port)
+// debug.logServer(`Static root: [${root}]`)
+// debug.logServer(`Listening on port: [${port}]`)
 
 app.use((req, res, next) => {
-    console.log('[' + Date.now() + ']: ' + req.originalUrl);
-    console.log('ROOT: ' + path.join(__dirname, '../gameclient'));
+    // debug.logExpress(`[${Date.now()}]: ${req.originalUrl}`)
     next()
 });
 
@@ -36,16 +38,22 @@ io.on('connection', (client) => {
 
     // Disconnect handler
     client.on('disconnect', function() {
-        console.log("Disconnected client " + client.id)
-        console.log((Object.keys(io.sockets.connected).length || "no") + " connections")
+        // debug.logSocket(`Disconnected client [${client.id}]`)
+        // debug.logSocket(`Connection count [${Object.keys(io.sockets.connected).length}]`)
     })
 
     // debug message
-    console.log("Connected client " + client.id)
-    console.log((numClients || "no") + " connections")
+    // debug.logSocket(`Connected client [${client.id}]`)
+    // debug.logSocket(`Connection count [${numClients}]`)
 
+    client.on('getMap', (level) => {
+        debug.logSocket(`<= getMap(${level})`)
+
+        let data = dodGame.dungeon.levels[level]
+
+        io.emit('getMap', data)
+    })
 });
-
 
 
 

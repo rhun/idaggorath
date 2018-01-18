@@ -17,7 +17,7 @@ function createDodGame() {
 }
 
 function connectWithDodServer() {
-    if (!dod.io) {
-        dod.io = io();
+    if (!dod.socket) {
+        dod.socket = io();
     }
 }
