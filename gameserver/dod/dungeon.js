@@ -69,6 +69,13 @@ module.exports = class Dungeon {
         this.levels.push([], [], [], [], [])
     }
 
+    getData() {
+        return {
+            levels: this.levels,
+            vfttab: this.VFTTAB
+        }
+    }
+
     CreateAllFiveOriginalLevels() {
         for (let l = 0; l < 5; ++l) {
             this.DGNGEN(l)

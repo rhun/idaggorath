@@ -1,6 +1,7 @@
 'use strict'
 
 const Dungeon = require('./dungeon.js')
+const Player = require('./player.js')
 
 module.exports = class DodGame {
     constructor() {
@@ -8,11 +9,10 @@ module.exports = class DodGame {
         this.dungeon.CreateAllFiveOriginalLevels()
         //this.dungeon.printMaze(2)
 
-        this.player = {
-            level: 0,
-            row: 12,
-            col: 22,
-            dir: 0
-        }
+        this.player = new Player()
+    }
+
+    getDungeonData() {
+        return this.dungeon.getData()
     }
 }
