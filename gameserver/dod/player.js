@@ -1,10 +1,11 @@
 'use strict'
 
 module.exports = class Player {
-    constructor() {
-        this.level = 0
-        this.row = 12
-        this.col = 22
-        this.dir = 0
+    constructor(id, playerConfig) {
+        this.id = id,
+        this.level = playerConfig.position.level
+        this.row = playerConfig.position.row
+        this.col = playerConfig.position.col
+        this.dir = playerConfig.position.dir
     }
 }

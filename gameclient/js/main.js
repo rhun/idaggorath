@@ -3,21 +3,36 @@
 */
 
 window.onload = function() {
-    createDodGame();
-    connectWithDodServer();
+    initPhaserGame();
+    initDodSocket();
 }
 
-function createDodGame() {
-    dod.game = new Phaser.Game(dod.width, dod.height, Phaser.AUTO, 'dodgame');
-    dod.game.state.add('Boot', Boot);
-    dod.game.state.add('Preloader', Preloader);
-    dod.game.state.add('Menu', Menu);
-    dod.game.state.add('Game', Game);
-    dod.game.state.start('Boot');
+function initPhaserGame() {
+    // Locals
+    var g = dod.phaser.game;
+    var w = dod.phaser.width;
+    var h = dod.phaser.height;
+
+    // Create phaser.io game
+    g = new Phaser.Game(w, h, Phaser.AUTO, 'phasergame');
+
+    // Add phaser states
+    g.state.add('Boot', Boot);
+    g.state.add('Preloader', Preloader);
+    g.state.add('Menu', Menu);
+    g.state.add('Game', Game);
+
+    // Start first state
+    g.state.start('Boot');
 }
 
-function connectWithDodServer() {
-    if (!dod.socket) {
-        dod.socket = io();
-    }
+function initDodSocket() {
+    // Locals
+    var s = dod.server
+
+    // Create the client-side socket object
+    s.socket = io();
+
+    // Set up socket handlers
+    s.initSocketHandlers();
 }

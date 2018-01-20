@@ -23,26 +23,31 @@ app.use(express.static(root));
 // Create Daggorath Game
 const dodGame = new DodGame()
 
-io.on('connection', (client) => {
+// Handle connection from client
+io.on('connection', (socket) => {
 
     // Make sure not too many clients
     var numClients = Object.keys(io.sockets.connected).length
     if (numClients > 10) {
-        io.to(client.id).emit('disconnect', { message: 'Too many users!' })
+        io.to(socket.id).emit('disconnect', { message: 'Too many users!' })
     }
 
     // Disconnect handler
-    client.on('disconnect', function() {
-        // debug.logSocket(`Disconnected client [${client.id}]`)
-        // debug.logSocket(`Connection count [${Object.keys(io.sockets.connected).length}]`)
+    socket.on('disconnect', function() {
+        debug.logSocket(`Disconnected: ${socket.id}`)
+        dodGame.removePlayer(socket.id)
     })
 
-    client.on('getMap', (level) => {
-        debug.logSocket(`<= getMap(${level})`)
+    socket.on('getDungeon', () => {
+        debug.logSocket(`<= getDungeon()`)
+        socket.emit('dungeon', dodGame.getDungeon())
+    })
 
-        let data = dodGame.dungeon.levels[level]
-
-        io.emit('getMap', data)
+    socket.on('addPlayer', (playerConfig) => {
+        debug.logSocket(`<= addPlayer(id: ${socket.id})`)
+        dodGame.addPlayer(socket.id, playerConfig)
+        socket.emit('players', dodGame.getPlayers())
+        socket.broadcast.emit('players', dodGame.getPlayers())
     })
 });
 
