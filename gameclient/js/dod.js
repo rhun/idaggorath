@@ -26,6 +26,7 @@ window.dod = {
     // iDaggorath Game
     game: {
         constants: {
+            scale: 2,
             view: {
                 MAP: 1,
                 PORT: 2,
@@ -40,6 +41,20 @@ window.dod = {
                     dir: 0
                 }
             },
+            color: {
+                black: '#000000',
+                white: '#FFFFFF'
+            },
+            colorNum: {
+                black: 0x000000,
+                white: 0xFFFFFF
+            },
+            dungeon: {
+                HF_PAS: 0,
+                HF_DOR: 1,
+                HF_SDR: 2,
+                HF_WAL: 3
+            }
         },
 
         state: {
@@ -70,12 +85,82 @@ window.dod = {
             RLIGHT: 0,
             MLIGHT: 0,
             VCTFAD: 32,
+            VXSCAL: 0,
+            VYSCAL: 0,
+            VCNTRX: 128,
+            VCNTRY: 76,
+            RANGE: 0,
+            NEIBOR: [],
             delay: 0,
             done: false,
             fadeVal: -2,
+            bgColor: '#000000',
+            fgColor: '#FFFFFF',
+            bgColorNum: 0x000000,
+            fgColorNum: 0xFFFFFF,
+
+            // Fixed arrays
+            LPAS_VLA: [],
+            LDOR_VLA: [],
+            LSD_VLA: [],
+            LWAL_VLA: [],
+            FPAS_VLA: [],
+            FDOR_VLA: [],
+            FSD_VLA: [],
+            FWAL_VLA: [],
+            RPAS_VLA: [],
+            RDOR_VLA: [],
+            RSD_VLA: [],
+            RWAL_VLA: [],
+            Scale: [],
+            FLATAB: [3, 0, 1],
+            FLATABv: [],
+            LArch: [],
+            FArch: [],
+            RArch: [],
 
             // Temp fields
             mapLevel: 0,
+
+            // This is the pseudo-constructor
+            init: function() {
+                // Locals
+                var v = dod.game.viewer;
+                var u = dod.game.utils;
+
+                u.LoadFromHex(v.Scale, 'C88050321F140C080402FF9C6441281A100A060301');
+                u.LoadFromHex(v.FSD_VLA, '01036C7180439472');
+            	u.LoadFromHex(v.LSD_VLA, '0103288032423A75');
+            	u.LoadFromHex(v.RSD_VLA, '0103D880CE42C675');
+            	u.LoadFromHex(v.RWAL_VLA, '0104E510C026C072E588');
+            	u.LoadFromHex(v.LWAL_VLA, '01041B10402640721B88');
+            	u.LoadFromHex(v.FWAL_VLA, '02024026C026024072C072');
+            	u.LoadFromHex(v.RPAS_VLA, '0204E526C026C072E57202E510C026');
+            	u.LoadFromHex(v.LPAS_VLA, '02041D26402640721B72021B104026');
+            	u.LoadFromHex(v.FPAS_VLA, '00');
+            	u.LoadFromHex(v.RDOR_VLA, '0304E510C026C072E58804D880D841C844C87702D05CCC5D');
+            	u.LoadFromHex(v.LDOR_VLA, '03041B10402640721B8804288028413844387702305C345D');
+            	u.LoadFromHex(v.FDOR_VLA, '04024026C026024072C072046C726C4394439472027E5E825E');
+
+                v.LArch[0] = v.LPAS_VLA;
+            	v.LArch[1] = v.LDOR_VLA;
+            	v.LArch[2] = v.LSD_VLA;
+            	v.LArch[3] = v.LWAL_VLA;
+
+            	v.FArch[0] = v.FPAS_VLA;
+            	v.FArch[1] = v.FDOR_VLA;
+            	v.FArch[2] = v.FSD_VLA;
+            	v.FArch[3] = v.FWAL_VLA;
+
+            	v.RArch[0] = v.RPAS_VLA;
+            	v.RArch[1] = v.RDOR_VLA;
+            	v.RArch[2] = v.RSD_VLA;
+            	v.RArch[3] = v.RWAL_VLA;
+
+                v.FLATABv[0] = v.LArch;
+            	v.FLATABv[1] = v.FArch;
+            	v.FLATABv[2] = v.RArch;
+            },
 
             reset: function() {
                 // Locals
@@ -83,6 +168,7 @@ window.dod = {
                 var c = dod.game.constants;
 
                 // Reset values
+                v.setVidInv(false);
                 v.mode = c.view.TITLE;
                 v.update = false;
                 v.seer = false;
@@ -100,16 +186,35 @@ window.dod = {
                 v.RLIGHT = 0;
                 v.MLIGHT = 0;
                 v.VCTFAD = 32;
+                v.VXSCAL = 0;
+                v.VYSCAL = 0;
+                v.VCNTRX = 128;
+                v.VCNTRY = 76;
+                v.RANGE = 0;
                 v.delay = 0;
                 v.done = false;
                 v.fadeVal = -2;
 
 /*
-setVidInv(false);
 clearArea(&TXTPRI);
 clearArea(&TXTEXA);
 clearArea(&TXTSTS);
 */
+            },
+
+            setVidInv: function(inv) {
+                // Locals
+                var v = dod.game.viewer;
+                var c = dod.game.constants;
+
+                // Set normal or inverse colors
+                v.bgColor = (inv ? c.color.white : c.color.black);
+                v.fgColor = (inv ? c.color.black : c.color.white);
+                v.bgColorNum = (inv ? c.colorNum.white : c.colorNum.black);
+                v.fgColorNum = (inv ? c.colorNum.black : c.colorNum.white);
+
+                // Set the background color
+                dod.phaser.game.stage = v.bgColor;
             },
 
             setMode: function(mode) {
@@ -134,7 +239,7 @@ clearArea(&TXTSTS);
                             v.drawMap();
                         } else {
                             if (v.mode === c.view.PORT) {
-                                //
+                                v.drawView();
                             } else if (v.mode === c.view.EXAMINE) {
                                 //
                             } else if (v.mode === c.view.TITLE) {
@@ -156,13 +261,184 @@ clearArea(&TXTSTS);
             // the full version still.
             drawView: function() {
                 // Locals
-                var range = 0;
-                var row = dod.game.state.players[0].position.row;
-                var col = dod.game.state.players[0].position.col;
+                var v = dod.game.viewer;
+                var utils = dod.game.utils;
+                var c = dod.game.constants;
+                var a, b, u, x, ftctr;
+
+                var level = v.mapLevel;
+                var pos = dod.game.state.players[0].position;
+
+                v.RANGE = 0;
 
                 do {
-                    //
-                } while (range <= 9);
+                    v.setScale();
+                    a = dod.game.state.dungeon.levels[level][utils.rc2idx(pos.row, pos.col)];
+                    u = 0;
+                    x = 4;
+
+                    do {
+                        b = a;
+            			b = (b & 3);
+            			v.NEIBOR[u+4] = b;
+            			v.NEIBOR[u] = b;
+            			++u;
+            			a >>= 2;
+            			--x;
+                    } while (x !== 0);
+
+                    b = pos.dir;
+                    u = b;
+
+                    for (ftctr = 0; ftctr < 3; ++ftctr)
+            		{
+            			b = v.NEIBOR[u + v.FLATAB[ftctr]];
+            			if (b == c.dungeon.HF_SDR)
+            			{
+            				--v.MAGFLG;
+            				v.drawIt(v.FLATABv[ftctr][b]);
+            				b = c.dungeon.HF_WAL;
+            			}
+            			v.drawIt(v.FLATABv[ftctr][b]);
+            		}
+
+                } while (v.RANGE <= 9);
+            },
+
+            drawIt: function(vl) {
+                dod.game.viewer.setFade();
+                // draw vector list
+            },
+
+            drawVectorList: function(vl) {
+                // Locals
+                var v = dod.game.viewer;
+                var utils = dod.game.utils;
+                var c = dod.game.constants;
+
+                var numLists = vl[0];
+            	var curList = 0;
+            	var numVertices;
+            	var curVertex;
+            	var	ctr = 1;
+                var x0, y0, x1, y1;
+
+            	if (v.VCTFAD == 0xFF)
+            	{
+            		return;
+            	}
+
+                while (curList < numLists) {
+                    numVertices = vl[ctr];
+                    ++ctr;
+                    curVertex = 0;
+                    while (curVertex < (numVertices - 1)) {
+                        // TODO: add modern graphics option here
+
+                        x0 = v.scaleXf(vl[ctr]) + v.VCNTRX;
+                        y0 = v.scaleYf(vl[ctr + 1]) + v.VCNTRY;
+                        x1 = v.scaleXf(vl[ctr + 2]) + v.VCNTRX;
+                        y1 = v.scaleYf(vl[ctr + 3]) + v.VCNTRY;
+                        v.drawVector(x0, y0, x1, y1);
+
+                        ctr += 2;
+                        ++curVertex;
+                    }
+                    ++curList;
+                    ctr += 2;
+                }
+            },
+
+            drawVector: function(X0, Y0, X1, Y1) {
+                // Locals
+                var v = dod.game.viewer;
+                var XL, YL, L, FADCNT, DX, DY, XX, XY;
+
+                // TODO: add modern graphics option here
+
+                if (v.VCTFAD === 0xFF) {
+                    return;
+                }
+                FADCNT = v.VCTFAD + 1;
+        		XL = (X1 > X0) ? (X1 - X0) : (X0 - X1);
+        		YL = (Y1 > Y0) ? (Y1 - Y0) : (Y0 - Y1);
+        		L = (XL > YL) ? XL : YL;
+        		if (L === 0)
+        		{
+        			return;
+        		}
+                DX = (XL / L) * ((X0 < X1) ? 1 : -1);
+        		DY = (YL / L) * ((Y0 < Y1) ? 1 : -1);
+
+                // TODO: add high-res option here
+
+                XX = X0 + 0.5;
+                YY = Y0 + 0.5;
+                do {
+                    if (--FADCNT === 0)
+        			{
+        				FADCNT = v.VCTFAD + 1;
+        				if (XX >= 0.0 && XX < 256.0 &&
+        					YY >= 0.0 && YY < 152.0)
+        				{
+                            // TODO: add high-res option here
+
+                            v.plotPoint(XX, YY);
+        				}
+        			}
+        			XX += DX;
+        			YY += DY;
+        			--L;
+                } while (L > 0);
+            },
+
+            plotPoint: function(X, Y) {
+                // Locals
+                
+            },
+
+            scaleXf: function(x) {
+                return ((x - v.VCNTRX) * v.VXSCAL) / 127);
+            },
+
+            scaleYf: function(y) {
+                return ((y - v.VCNTRY) * v.VYSCAL) / 127);
+            },
+
+            setFade: function() {
+                // Locals
+                var v = dod.game.viewer;
+                var a, b;
+
+                a = v.RLIGHT;
+                (if v.MAGFLG != 0) {
+                    a = v.MLIGHT;
+                    v.MAGFLG = 0;
+                }
+                b = 0;
+                a = ((a - 7) & 255);
+                a = ((a - v.RANGE) & 255);
+                if ((a & 128) != 0) {
+                    b = ((b - 1) & 255);
+                    if ((((a & 128) != 0) && a > 0xF9) || ((a & 128) == 0)) {  // if (a > -7)
+                        b = ((1 << (-1 - a)) & 255);
+                    }
+                }
+                v.VCTFAD = b;
+            },
+
+            setScale: function() {
+                // Locals
+                var v = dod.game.viewer;
+                var idx = v.HLFSCL;
+                if (v.HLFSTP === 0) {
+                    ++idx;
+                    if (v.BAKSTP === 0) {
+                        idx = 0;
+                    }
+                }
+                v.VXSCAL = v.Scale[idx + v.RANGE];
+                v.VYSCAL = v.Scale[idx + v.RANGE];
             },
 
             // This draws the dungeon map.
@@ -199,7 +475,25 @@ clearArea(&TXTSTS);
             }
         },
 
+        utils: {
+            loadFromHex: function(arr, hex) {
+                for (var i = 0; i < hex.length; i += 2) {
+                    arr.push(parseInt(hex.substr(i, 2), 16));
+                }
+            },
+
+            rc2idx: function(R, C) {
+                R &= 31;
+            	C &= 31;
+            	return (R * 32 + C);
+            }
+        },
+
         control: {
+            initGame: function() {
+                dod.game.viewer.init();
+            },
+
             resetGame: function() {
                 dod.game.state.dungeon = {};
                 dod.game.state.players = {};

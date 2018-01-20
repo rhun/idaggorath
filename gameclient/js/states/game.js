@@ -2,6 +2,7 @@ var Game = function(game) {};
 
 Game.prototype = {
     init: function() {
+        dod.game.control.initGame();
         dod.game.control.resetGame();
     },
     preload: function() {
