@@ -9,12 +9,13 @@ window.onload = function() {
 
 function initPhaserGame() {
     // Locals
-    var g = dod.phaser.game;
+    var g;
     var w = dod.phaser.width;
     var h = dod.phaser.height;
 
     // Create phaser.io game
-    g = new Phaser.Game(w, h, Phaser.AUTO, 'phasergame');
+    dod.phaser.game = new Phaser.Game(w, h, Phaser.AUTO, 'phasergame');
+    g = dod.phaser.game;
 
     // Add phaser states
     g.state.add('Boot', Boot);

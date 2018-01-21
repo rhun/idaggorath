@@ -17,8 +17,9 @@ Game.prototype = {
         v.setMode(c.view.MAP)
     },
     create: function() {
+        dod.game.control.setBackgroundColor();
         dod.phaser.graphics = this.game.add.graphics();
-        this.game.input.keyboard.addCallbacks(this, null, null, dod.phaser.onKeyPress);
+        this.game.input.keyboard.addCallbacks(this, dod.phaser.onKeyDown, null, dod.phaser.onKeyPress);
     },
     update: function() {
         // Process keys ???

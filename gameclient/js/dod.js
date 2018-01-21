@@ -16,9 +16,44 @@ window.dod = {
         height: 384,
         graphics: undefined,
 
+        onKeyDown: function(keyEvent) {
+            //Locals
+            var v = dod.game.viewer;
+            var p = dod.game.state.players[0];
+
+            if (keyEvent.keyCode === Phaser.KeyCode.UP) {
+                dod.game.control.moveForward();
+            } else if (keyEvent.keyCode === Phaser.KeyCode.DOWN) {
+                dod.game.control.moveBackward();
+            } else if (keyEvent.keyCode === Phaser.KeyCode.RIGHT) {
+                --p.dir;
+                if (p.dir < 0) {
+                    p.dir = 3;
+                }
+                v.update = true;
+            } else if (keyEvent.keyCode === Phaser.KeyCode.LEFT) {
+                ++p.dir;
+                if (p.dir > 3) {
+                    p.dir = 0;
+                }
+                v.update = true;
+            }
+        },
+
         onKeyPress: function(key, keyEvent) {
+            console.log('onKeyPress: ' + keyEvent.keyCode);
+            // Locals
+            var v = dod.game.viewer;
+            var c = dod.game.constants;
+
             if (keyEvent.keyCode >= 49 && keyEvent.keyCode <= 53) {
-                dod.game.viewer.setMapLevel(keyEvent.keyCode - 49);
+                v.setMapLevel(keyEvent.keyCode - 49);
+            } else if (key === 'P' || key === 'p') {
+                v.setMode(c.view.PORT);
+            } else if (key === 'M' || key === 'm') {
+                v.setMode(c.view.MAP);
+            } else if (keyEvent.keyCode === Phaser.KeyCode.UP) {
+                --dod.game.state.players[0].row;
             }
         }
     },
@@ -26,6 +61,8 @@ window.dod = {
     // iDaggorath Game
     game: {
         constants: {
+            origWidth: 256,
+            origHeight: 192,
             scale: 2,
             view: {
                 MAP: 1,
@@ -36,8 +73,8 @@ window.dod = {
             position: {
                 CLASSIC_START: {
                     level: 1,
-                    row: 12,
-                    col: 22,
+                    row: 16,
+                    col: 11,
                     dir: 0
                 }
             },
@@ -81,7 +118,7 @@ window.dod = {
             TXBFLG: 0,
             TXB_U: 0,
             tcaret: 0,
-            tlen: 0;
+            tlen: 0,
             RLIGHT: 0,
             MLIGHT: 0,
             VCTFAD: 32,
@@ -91,6 +128,7 @@ window.dod = {
             VCNTRY: 76,
             RANGE: 0,
             NEIBOR: [],
+            STPTAB: [-1, 0, 0, 1, 1, 0, 0, -1],
             delay: 0,
             done: false,
             fadeVal: -2,
@@ -128,19 +166,19 @@ window.dod = {
                 var v = dod.game.viewer;
                 var u = dod.game.utils;
 
-                u.LoadFromHex(v.Scale, 'C88050321F140C080402FF9C6441281A100A060301');
-                u.LoadFromHex(v.FSD_VLA, '01036C7180439472');
-            	u.LoadFromHex(v.LSD_VLA, '0103288032423A75');
-            	u.LoadFromHex(v.RSD_VLA, '0103D880CE42C675');
-            	u.LoadFromHex(v.RWAL_VLA, '0104E510C026C072E588');
-            	u.LoadFromHex(v.LWAL_VLA, '01041B10402640721B88');
-            	u.LoadFromHex(v.FWAL_VLA, '02024026C026024072C072');
-            	u.LoadFromHex(v.RPAS_VLA, '0204E526C026C072E57202E510C026');
-            	u.LoadFromHex(v.LPAS_VLA, '02041D26402640721B72021B104026');
-            	u.LoadFromHex(v.FPAS_VLA, '00');
-            	u.LoadFromHex(v.RDOR_VLA, '0304E510C026C072E58804D880D841C844C87702D05CCC5D');
-            	u.LoadFromHex(v.LDOR_VLA, '03041B10402640721B8804288028413844387702305C345D');
-            	u.LoadFromHex(v.FDOR_VLA, '04024026C026024072C072046C726C4394439472027E5E825E');
+                u.loadFromHex(v.Scale, 'C88050321F140C080402FF9C6441281A100A060301');
+                u.loadFromHex(v.FSD_VLA, '01036C7180439472');
+            	u.loadFromHex(v.LSD_VLA, '0103288032423A75');
+            	u.loadFromHex(v.RSD_VLA, '0103D880CE42C675');
+            	u.loadFromHex(v.RWAL_VLA, '0104E510C026C072E588');
+            	u.loadFromHex(v.LWAL_VLA, '01041B10402640721B88');
+            	u.loadFromHex(v.FWAL_VLA, '02024026C026024072C072');
+            	u.loadFromHex(v.RPAS_VLA, '0204E526C026C072E57202E510C026');
+            	u.loadFromHex(v.LPAS_VLA, '02041D26402640721B72021B104026');
+            	u.loadFromHex(v.FPAS_VLA, '00');
+            	u.loadFromHex(v.RDOR_VLA, '0304E510C026C072E58804D880D841C844C87702D05CCC5D');
+            	u.loadFromHex(v.LDOR_VLA, '03041B10402640721B8804288028413844387702305C345D');
+            	u.loadFromHex(v.FDOR_VLA, '04024026C026024072C072046C726C4394439472027E5E825E');
 
                 v.LArch[0] = v.LPAS_VLA;
             	v.LArch[1] = v.LDOR_VLA;
@@ -195,6 +233,12 @@ window.dod = {
                 v.done = false;
                 v.fadeVal = -2;
 
+
+                // Remove this later
+                v.RLIGHT = 25;
+
+
+
 /*
 clearArea(&TXTPRI);
 clearArea(&TXTEXA);
@@ -212,9 +256,6 @@ clearArea(&TXTSTS);
                 v.fgColor = (inv ? c.color.black : c.color.white);
                 v.bgColorNum = (inv ? c.colorNum.white : c.colorNum.black);
                 v.fgColorNum = (inv ? c.colorNum.black : c.colorNum.white);
-
-                // Set the background color
-                dod.phaser.game.stage = v.bgColor;
             },
 
             setMode: function(mode) {
@@ -238,6 +279,7 @@ clearArea(&TXTSTS);
                         if (v.mode === c.view.MAP) {
                             v.drawMap();
                         } else {
+                            g.beginFill(v.fgColorNum);
                             if (v.mode === c.view.PORT) {
                                 v.drawView();
                             } else if (v.mode === c.view.EXAMINE) {
@@ -247,6 +289,7 @@ clearArea(&TXTSTS);
                             } else {
                                 // ?????
                             }
+                            g.endFill();
                         }
                         v.update = false;
                     }
@@ -267,13 +310,15 @@ clearArea(&TXTSTS);
                 var a, b, u, x, ftctr;
 
                 var level = v.mapLevel;
-                var pos = dod.game.state.players[0].position;
+                var row = dod.game.state.players[0].row;
+                var col = dod.game.state.players[0].col;
+                var dir = dod.game.state.players[0].dir;
 
                 v.RANGE = 0;
 
                 do {
                     v.setScale();
-                    a = dod.game.state.dungeon.levels[level][utils.rc2idx(pos.row, pos.col)];
+                    a = dod.game.state.dungeon.levels[level][utils.rc2idx(row, col)];
                     u = 0;
                     x = 4;
 
@@ -287,7 +332,7 @@ clearArea(&TXTSTS);
             			--x;
                     } while (x !== 0);
 
-                    b = pos.dir;
+                    b = dir;
                     u = b;
 
                     for (ftctr = 0; ftctr < 3; ++ftctr)
@@ -302,12 +347,25 @@ clearArea(&TXTSTS);
             			v.drawIt(v.FLATABv[ftctr][b]);
             		}
 
+                    ///// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    ///// all the rest of the rendering
+                    ///// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                    if (v.NEIBOR[u] != 0)
+                    {
+                        break;
+                    }
+
+                    row += v.STPTAB[dir * 2];
+                    col += v.STPTAB[dir * 2 + 1];
+                    ++v.RANGE;
+
                 } while (v.RANGE <= 9);
             },
 
             drawIt: function(vl) {
                 dod.game.viewer.setFade();
-                // draw vector list
+                dod.game.viewer.drawVectorList(vl);
             },
 
             drawVectorList: function(vl) {
@@ -394,15 +452,38 @@ clearArea(&TXTSTS);
 
             plotPoint: function(X, Y) {
                 // Locals
-                
+                var v = dod.game.viewer;
+                var g = dod.phaser.graphics;
+
+                var x0 = v.newX(X);
+                var y0 = v.newY(Y);
+                var x1 = v.newX(X + 1);
+                var y1 = v.newY(Y + 1);
+                var w = x1 - x0;
+                var h = y1 - y0;
+                g.drawRect(x0, y0, w, h);
+            },
+
+            newX: function(origX) {
+                return origX / dod.game.constants.origWidth * dod.phaser.width;
+            },
+
+            newY: function(origY) {
+                return origY / dod.game.constants.origHeight * dod.phaser.height;
             },
 
             scaleXf: function(x) {
-                return ((x - v.VCNTRX) * v.VXSCAL) / 127);
+                // Locals
+                var v = dod.game.viewer;
+
+                return (((x - v.VCNTRX) * v.VXSCAL) / 127);
             },
 
             scaleYf: function(y) {
-                return ((y - v.VCNTRY) * v.VYSCAL) / 127);
+                // Locals
+                var v = dod.game.viewer;
+
+                return (((y - v.VCNTRY) * v.VYSCAL) / 127);
             },
 
             setFade: function() {
@@ -411,7 +492,7 @@ clearArea(&TXTSTS);
                 var a, b;
 
                 a = v.RLIGHT;
-                (if v.MAGFLG != 0) {
+                if (v.MAGFLG != 0) {
                     a = v.MLIGHT;
                     v.MAGFLG = 0;
                 }
@@ -486,6 +567,30 @@ clearArea(&TXTSTS);
                 R &= 31;
             	C &= 31;
             	return (R * 32 + C);
+            },
+
+            getAdjoiningIdx: function(r, c, d) {
+                
+            }
+
+            checkBounds: function(dir) {
+                // Locals
+                var p = dod.game.state.players[0];
+
+                switch (dir) {
+                    case 0:
+                        return p.row > 0;
+                        break;
+                    case 1:
+                        return p.col < 31;
+                        break;
+                    case 2:
+                        return p.row < 31;
+                        break;
+                    case 3:
+                        return p.col > 0;
+                        break;
+                }
             }
         },
 
@@ -502,6 +607,10 @@ clearArea(&TXTSTS);
                 dod.game.viewer.reset();
             },
 
+            setBackgroundColor: function() {
+                dod.phaser.game.stage.backgroundColor = dod.game.viewer.bgColor;
+            },
+
             getDungeon: function() {
                 dod.server.socket.emit('getDungeon')
             },
@@ -511,6 +620,30 @@ clearArea(&TXTSTS);
                     position: position,
                     items: []
                 });
+            },
+
+            moveForward: function() {
+                //Locals
+                var u = dod.game.utils;
+                var p = dod.game.state.players[0];
+
+                if (u.checkBounds(p.dir)) {
+                    //
+                }
+            },
+
+            moveBackward: function() {
+                //Locals
+                var u = dod.game.utils;
+                var p = dod.game.state.players[0];
+                var d = p.dir + 2;
+                if (d > 3) {
+                    d -= 4;
+                }
+
+                if (u.checkBounds(d)) {
+                    //
+                }
             }
         },
 
