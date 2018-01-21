@@ -25,13 +25,13 @@ window.dod = {
                 dod.game.control.moveForward();
             } else if (keyEvent.keyCode === Phaser.KeyCode.DOWN) {
                 dod.game.control.moveBackward();
-            } else if (keyEvent.keyCode === Phaser.KeyCode.RIGHT) {
+            } else if (keyEvent.keyCode === Phaser.KeyCode.LEFT) {
                 --p.dir;
                 if (p.dir < 0) {
                     p.dir = 3;
                 }
                 v.update = true;
-            } else if (keyEvent.keyCode === Phaser.KeyCode.LEFT) {
+            } else if (keyEvent.keyCode === Phaser.KeyCode.RIGHT) {
                 ++p.dir;
                 if (p.dir > 3) {
                     p.dir = 0;
@@ -569,9 +569,33 @@ clearArea(&TXTSTS);
             	return (R * 32 + C);
             },
 
+            idx2rc: function(idx) {
+                return {
+                    row: ((idx / 32) | 0),
+                    col: idx % 32
+                }
+            },
+
             getAdjoiningIdx: function(r, c, d) {
-                
-            }
+                switch (d) {
+                    case 0:
+                        --r;
+                        break;
+                    case 1:
+                        ++c;
+                        break;
+                    case 2:
+                        ++r;
+                        break;
+                    case 3:
+                        --c;
+                        break;
+                }
+                if (r >= 0 && r <=31 && c >=0 && c <= 31) {
+                    return dod.game.utils.rc2idx(r, c);
+                }
+                return -1;
+            },
 
             checkBounds: function(dir) {
                 // Locals
@@ -623,26 +647,34 @@ clearArea(&TXTSTS);
             },
 
             moveForward: function() {
-                //Locals
-                var u = dod.game.utils;
-                var p = dod.game.state.players[0];
-
-                if (u.checkBounds(p.dir)) {
-                    //
-                }
+                var dir = dod.game.state.players[0].dir;
+                dod.game.control.doMove(dir);
             },
 
             moveBackward: function() {
+                var dir = dod.game.state.players[0].dir + 2;
+                if (dir > 3) {
+                    dir -= 4;
+                }
+                dod.game.control.doMove(dir);
+            },
+
+            doMove: function(dir) {
                 //Locals
+                var v = dod.game.viewer;
                 var u = dod.game.utils;
                 var p = dod.game.state.players[0];
-                var d = p.dir + 2;
-                if (d > 3) {
-                    d -= 4;
-                }
+                var idx, map, rc;
 
-                if (u.checkBounds(d)) {
-                    //
+                if (u.checkBounds(dir)) {
+                    idx = u.getAdjoiningIdx(p.row, p.col, dir);
+                    map = dod.game.state.dungeon.levels[v.mapLevel];
+                    if (map[idx] != 0xFF) {
+                        rc = u.idx2rc(idx);
+                        p.row = rc.row;
+                        p.col = rc.col;
+                        v.update = true;
+                    }
                 }
             }
         },
