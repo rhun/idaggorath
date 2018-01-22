@@ -4,6 +4,7 @@ window.dod = {
         url: 'localhost:58181',
         socket: undefined,
         initSocketHandlers: function() {
+            dod.server.socket.on('disconnect', dod.game.handlers.onDisconnect);
             dod.server.socket.on('dungeon', dod.game.handlers.onDungeon);
             dod.server.socket.on('players', dod.game.handlers.onPlayers);
         }
@@ -106,6 +107,7 @@ window.dod = {
         state: {
             dungeon: [],
             players: [],
+            gameFull: false,
 
             isReady: function() {
                 return (dod.game.state.dungeon.levels && dod.game.state.players.length);
@@ -297,6 +299,21 @@ clearArea(&TXTSTS);
                 var v = dod.game.viewer;
                 var c = dod.game.constants;
                 var u = dod.game.utils;
+                
+                // If too many players already in game
+                if (dod.game.state.error && v.update) {
+                    g.clear();
+                    var text = new Phaser.Text(dod.phaser.game, 0, 0, dod.game.state.errorMsg, {
+                        font: 'normal 20px Arial',
+                        fill: '#FFFFFF',
+                        boundsAlignH: 'center',
+                        boundsAlignV: 'middle'
+                    });
+                    text.setTextBounds(0, 0, dod.phaser.width, dod.phaser.height);
+                    g.addChild(text);
+                    v.update = false;
+                    return;
+                }
 
                 // Make sure initial state is ready
                 if (dod.game.state.isReady()) {
@@ -733,7 +750,9 @@ clearArea(&TXTSTS);
                 if (vft === c.dungeon.VF_HOLE_UP || vft === c.dungeon.VF_LADDER_UP) {
                     --p.level;
                     --v.mapLevel; /// Remove this duplication
-                    v.setVidInv(p.level % 2);
+                    if (v.mode !== c.view.MAP) {
+                        v.setVidInv(p.level % 2 === 1);
+                    }
                     v.update = true;
                 }
             },
@@ -748,7 +767,9 @@ clearArea(&TXTSTS);
                 if (vft === c.dungeon.VF_HOLE_DOWN || vft === c.dungeon.VF_LADDER_DOWN) {
                     ++p.level;
                     ++v.mapLevel; /// Remove this duplication
-                    v.setVidInv(p.level % 2);
+                    if (v.mode !== c.view.MAP) {
+                        v.setVidInv(p.level % 2 === 1);
+                    }
                     v.update = true;
                 }
             },
@@ -812,11 +833,20 @@ clearArea(&TXTSTS);
         },
 
         handlers: {
+            onDisconnect: function(data) {
+                console.log('RCVD: disconnect: ' + data.message);
+                dod.game.state.error = true;
+                dod.game.state.errorMsg = data.message;
+                dod.game.viewer.update = true;
+            },
+            
             onDungeon: function(dungeon) {
+                console.log('RCVD: dungeon');
                 dod.game.state.dungeon = dungeon;
             },
 
             onPlayers: function(players) {
+                console.log('RCVD: players');
                 dod.game.state.players = players;
             }
         }

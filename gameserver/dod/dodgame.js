@@ -9,6 +9,7 @@
 const debug = require('../debug.js')
 const Dungeon = require('./dungeon.js')
 const Player = require('./player.js')
+const _ = require('underscore')
 
 module.exports = class DodGame {
     // Default constructor
@@ -16,6 +17,8 @@ module.exports = class DodGame {
         this.dungeon = new Dungeon()
         this.dungeon.CreateAllFiveOriginalLevels()
         this.players = []
+        debug.logSocket(`Dungeon created`)
+        debug.logSocket(`Player count = ${this.players.length}`)
     }
 
     // Accessors
@@ -32,27 +35,26 @@ module.exports = class DodGame {
         }
         return p
     }
+    
+    getCountOfPlayers() {
+        return this.players.length
+    }
 
     // Mutators
     addPlayer(id, playerConfig) {
-        let added = false
-        let player = new Player(id, playerConfig)
-        for (let i = 0; i < this.players.length; ++i) {
-            if (this.players[i] === undefined) {
-                this.players[i] = player
-                added = true
-            }
-        }
-        if (!added) {
-            this.players.push(player)
-        }
+        this.players.push(new Player(id, playerConfig))
+        debug.logSocket(`Player count = ${this.players.length}`)
     }
 
     removePlayer(id) {
         for (let i = 0; i < this.players.length; ++i) {
-            if (this.players[i].id === id) {
+            let p = this.players[i];
+            if (p && p.id === id) {
                 this.players[i] = undefined
+                break
             }
         }
+        this.players = _.compact(this.players)
+        debug.logSocket(`Player count = ${this.players.length}`)
     }
 }

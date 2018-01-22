@@ -2,6 +2,7 @@
 
 // Require Modules
 const debug = require('./debug.js')
+const dodproc = require('./dodprocess.js')
 const express = require('express')
 const http = require('http')
 const socketio = require('socket.io')
@@ -27,9 +28,10 @@ const dodGame = new DodGame()
 io.on('connection', (socket) => {
 
     // Make sure not too many clients
-    var numClients = Object.keys(io.sockets.connected).length
-    if (numClients > 10) {
-        io.to(socket.id).emit('disconnect', { message: 'Too many users!' })
+    var numPlayers = dodGame.getCountOfPlayers()
+    if (numPlayers > 10) {
+        socket.emit('disconnect', { message: 'This game is already full.' })
+        return;
     }
 
     // Disconnect handler
