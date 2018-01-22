@@ -53,7 +53,7 @@ module.exports = class Dungeon {
     	this.STPTAB[6] = 0
     	this.STPTAB[7] = -1
 
-        this.SetVFTTABOrig()
+        //this.SetVFTTABOrig()
 
         this.NS[3]='—'
     	this.NS[2]='='
@@ -67,12 +67,18 @@ module.exports = class Dungeon {
         // All five levels
         this.levels = []
         this.levels.push([], [], [], [], [])
+
+        // Vertical features
+        this.VF_NONE = 0
+        this.VF_HOLE_UP = 1
+        this.VF_LADDER_UP = 2
+        this.VF_HOLE_DOWN = 3
+        this.VF_LADDER_DOWN = 4
     }
 
     getData() {
         return {
-            levels: this.levels,
-            vfttab: this.VFTTAB
+            levels: this.levels
         }
     }
 
@@ -80,6 +86,7 @@ module.exports = class Dungeon {
         for (let l = 0; l < 5; ++l) {
             this.DGNGEN(l)
         }
+        this.SetVFTTABOrig()
     }
 
     DGNGEN(LEVEL) {
@@ -120,7 +127,22 @@ module.exports = class Dungeon {
         DST = DD.DST
 
         // Make sure the vertical feature table isn't overwritten from pervious new game.
-		this.SetVFTTABOrig()
+
+        // For code archeologists, I've removed the arcane Vertical Features Table.
+        // Vertical features are now stored together in the main array, in the higher
+        // order byte. The only restriction is that a room can't have a both a ceiling
+        // feature and a floor feature. (The graphics won't support it at the moment.)
+        //
+        // this.VF_NONE = 0
+        // this.VF_HOLE_UP = 1
+        // this.VF_LADDER_UP = 2
+        // this.VF_HOLE_DOWN = 3
+        // this.VF_LADDER_DOWN = 4
+        //
+        // This next line has been moved outside this function, as all five levels
+        // of the maze are now built at once. When I add back in random mazes,
+        // I'll need to revisit this. TODO: Random Mazes
+		//this.SetVFTTABOrig()
 
         // Build the rooms
         while (cell_ctr > 0) {
@@ -205,7 +227,6 @@ module.exports = class Dungeon {
 
         /* Phase 4: Create vertical feature */
         // TODO: More random maze stuff here
-
 
         // // Spin the RNG
     	// if (scheduler.curTime == 0)
@@ -303,49 +324,113 @@ module.exports = class Dungeon {
     	MAZLND[maz_idx] |= table[DIR];
     }
 
+    // For code archeologists, I've removed the arcane Vertical Features Table.
+    // Vertical features are now stored together in the main array, in the higher
+    // order byte. The only restriction is that a room can't have a both a ceiling
+    // feature and a floor feature. (The graphics won't support it at the moment.)
+    //
+    // this.VF_NONE = 0
+    // this.VF_HOLE_UP = 1
+    // this.VF_LADDER_UP = 2
+    // this.VF_HOLE_DOWN = 3
+    // this.VF_LADDER_DOWN = 4
+    //
     SetVFTTABOrig() {
-        this.VFTTAB[0] = -1
-    	this.VFTTAB[1] = 1
-    	this.VFTTAB[2] = 0
-    	this.VFTTAB[3] = 23
-    	this.VFTTAB[4] = 0
-    	this.VFTTAB[5] = 15
-    	this.VFTTAB[6] = 4
-    	this.VFTTAB[7] = 0
-    	this.VFTTAB[8] = 20
-    	this.VFTTAB[9] = 17
-    	this.VFTTAB[10] = 1
-    	this.VFTTAB[11] = 28
-    	this.VFTTAB[12] = 30
-    	this.VFTTAB[13] = -1
-    	this.VFTTAB[14] = 1
-    	this.VFTTAB[15] = 2
-    	this.VFTTAB[16] = 3
-    	this.VFTTAB[17] = 0
-    	this.VFTTAB[18] = 3
-    	this.VFTTAB[19] = 31
-    	this.VFTTAB[20] = 0
-    	this.VFTTAB[21] = 19
-    	this.VFTTAB[22] = 20
-    	this.VFTTAB[23] = 0
-    	this.VFTTAB[24] = 31
-    	this.VFTTAB[25] = 0
-    	this.VFTTAB[26] = -1
-    	this.VFTTAB[27] = -1
-    	this.VFTTAB[28] = 0
-    	this.VFTTAB[29] = 0
-    	this.VFTTAB[30] = 31
-    	this.VFTTAB[31] = 0
-    	this.VFTTAB[32] = 5
-    	this.VFTTAB[33] = 0
-    	this.VFTTAB[34] = 0
-    	this.VFTTAB[35] = 22
-    	this.VFTTAB[36] = 28
-    	this.VFTTAB[37] = 0
-    	this.VFTTAB[38] = 31
-    	this.VFTTAB[39] = 16
-    	this.VFTTAB[40] = -1
-    	this.VFTTAB[41] = -1
+        // First Level (0) -- Ceiling
+        // No holes or ladders from above
+
+        // First Level (0) -- Floor
+        this.SetVerticalFeature(0,  0, 23, this.VF_LADDER_DOWN)
+        this.SetVerticalFeature(0, 15,  4, this.VF_HOLE_DOWN)
+        this.SetVerticalFeature(0, 20, 17, this.VF_HOLE_DOWN)
+        this.SetVerticalFeature(0, 28, 30, this.VF_LADDER_DOWN)
+
+        // Second Level (1) -- Ceiling (same as above)
+        this.SetVerticalFeature(1,  0, 23, this.VF_LADDER_UP)
+        this.SetVerticalFeature(1, 15,  4, this.VF_HOLE_UP)
+        this.SetVerticalFeature(1, 20, 17, this.VF_HOLE_UP)
+        this.SetVerticalFeature(1, 28, 30, this.VF_LADDER_UP)
+
+        // Second Level (1) -- Floor
+        this.SetVerticalFeature(1,  2,  3, this.VF_LADDER_DOWN)
+        this.SetVerticalFeature(1,  3, 31, this.VF_HOLE_DOWN)
+        this.SetVerticalFeature(1, 19, 20, this.VF_HOLE_DOWN)
+        this.SetVerticalFeature(1, 31,  0, this.VF_HOLE_DOWN)
+
+        // Third Level (2) -- Ceiling (same as above)
+        this.SetVerticalFeature(2,  2,  3, this.VF_LADDER_UP)
+        this.SetVerticalFeature(2,  3, 31, this.VF_HOLE_UP)
+        this.SetVerticalFeature(2, 19, 20, this.VF_HOLE_UP)
+        this.SetVerticalFeature(2, 31,  0, this.VF_HOLE_UP)
+
+        // Third Level (2) -- Floor
+        // No holes or ladders leading down
+
+        // Fourth Level (3) -- Ceiling (same as above)
+        // No holes or ladders from above
+
+        // Fourth Level (3) -- Floor
+        this.SetVerticalFeature(3,  0, 31, this.VF_HOLE_DOWN)
+        this.SetVerticalFeature(3,  5,  0, this.VF_HOLE_DOWN)
+        this.SetVerticalFeature(3, 22, 28, this.VF_HOLE_DOWN)
+        this.SetVerticalFeature(3, 31, 16, this.VF_HOLE_DOWN)
+
+        // Fifth Level (4) -- Ceiling (same as above)
+        this.SetVerticalFeature(4,  0, 31, this.VF_HOLE_UP)
+        this.SetVerticalFeature(4,  5,  0, this.VF_HOLE_UP)
+        this.SetVerticalFeature(4, 22, 28, this.VF_HOLE_UP)
+        this.SetVerticalFeature(4, 31, 16, this.VF_HOLE_UP)
+
+        // Fifth Level (4) -- Floor
+        // No holes or ladders leading down
+
+        // this.VFTTAB[0] = -1
+    	// this.VFTTAB[1] = 1
+    	// this.VFTTAB[2] = 0
+    	// this.VFTTAB[3] = 23
+    	// this.VFTTAB[4] = 0
+    	// this.VFTTAB[5] = 15
+    	// this.VFTTAB[6] = 4
+    	// this.VFTTAB[7] = 0
+    	// this.VFTTAB[8] = 20
+    	// this.VFTTAB[9] = 17
+    	// this.VFTTAB[10] = 1
+    	// this.VFTTAB[11] = 28
+    	// this.VFTTAB[12] = 30
+    	// this.VFTTAB[13] = -1
+    	// this.VFTTAB[14] = 1
+    	// this.VFTTAB[15] = 2
+    	// this.VFTTAB[16] = 3
+    	// this.VFTTAB[17] = 0
+    	// this.VFTTAB[18] = 3
+    	// this.VFTTAB[19] = 31
+    	// this.VFTTAB[20] = 0
+    	// this.VFTTAB[21] = 19
+    	// this.VFTTAB[22] = 20
+    	// this.VFTTAB[23] = 0
+    	// this.VFTTAB[24] = 31
+    	// this.VFTTAB[25] = 0
+    	// this.VFTTAB[26] = -1
+    	// this.VFTTAB[27] = -1
+    	// this.VFTTAB[28] = 0
+    	// this.VFTTAB[29] = 0
+    	// this.VFTTAB[30] = 31
+    	// this.VFTTAB[31] = 0
+    	// this.VFTTAB[32] = 5
+    	// this.VFTTAB[33] = 0
+    	// this.VFTTAB[34] = 0
+    	// this.VFTTAB[35] = 22
+    	// this.VFTTAB[36] = 28
+    	// this.VFTTAB[37] = 0
+    	// this.VFTTAB[38] = 31
+    	// this.VFTTAB[39] = 16
+    	// this.VFTTAB[40] = -1
+    	// this.VFTTAB[41] = -1
+    }
+
+    SetVerticalFeature(level, row, col, feature) {
+        let idx = this.RC2IDX(row, col)
+        this.levels[level][idx] |= (feature << 8)
     }
 
     SetLEVTABOrig() {

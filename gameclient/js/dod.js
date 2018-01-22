@@ -46,14 +46,18 @@ window.dod = {
             var v = dod.game.viewer;
             var c = dod.game.constants;
 
-            if (keyEvent.keyCode >= 49 && keyEvent.keyCode <= 53) {
-                v.setMapLevel(keyEvent.keyCode - 49);
-            } else if (key === 'P' || key === 'p') {
+            if (key === 'V' || key === 'v') {
                 v.setMode(c.view.PORT);
             } else if (key === 'M' || key === 'm') {
                 v.setMode(c.view.MAP);
-            } else if (keyEvent.keyCode === Phaser.KeyCode.UP) {
-                --dod.game.state.players[0].row;
+            } else if (key === 'U' || key === 'u') {
+                dod.game.control.climbUp();
+            } else if (key === 'D' || key === 'd') {
+                dod.game.control.climbDown();
+            } else if (key === 'W' || key === 'w') {
+                dod.game.control.transport('W');
+            } else if (key === 'Q' || key === 'q') {
+                dod.game.control.transport('Q');
             }
         }
     },
@@ -72,7 +76,7 @@ window.dod = {
             },
             position: {
                 CLASSIC_START: {
-                    level: 1,
+                    level: 0,
                     row: 16,
                     col: 11,
                     dir: 0
@@ -92,18 +96,17 @@ window.dod = {
                 HF_SDR: 2,
                 HF_WAL: 3,
 
-                VF_HOLE_UP: 0,
-        		VF_LADDER_UP: 1,
-        		VF_HOLE_DOWN: 2,
-        		VF_LADDER_DOWN: 3,
-        		VF_NULL: 255
+                VF_NONE: 0,
+                VF_HOLE_UP: 1,
+        		VF_LADDER_UP: 2,
+        		VF_HOLE_DOWN: 3,
+        		VF_LADDER_DOWN: 4
             }
         },
 
         state: {
             dungeon: [],
             players: [],
-            viewer: undefined,
 
             isReady: function() {
                 return (dod.game.state.dungeon.levels && dod.game.state.players.length);
@@ -142,7 +145,6 @@ window.dod = {
             fgColor: '#FFFFFF',
             bgColorNum: 0x000000,
             fgColorNum: 0xFFFFFF,
-            VFTPTR: -1,
 
             // Fixed arrays
             LPAS_VLA: [],
@@ -248,8 +250,6 @@ window.dod = {
                 v.delay = 0;
                 v.done = false;
                 v.fadeVal = -2;
-                v.VFTPTR = -1;
-
 
                 // Remove this later
                 v.RLIGHT = 10;
@@ -292,13 +292,6 @@ clearArea(&TXTSTS);
                 // Make sure initial state is ready
                 if (dod.game.state.isReady()) {
 
-                    // Make sure VFTPTR is set correctly.
-                    // This check needs to go into a more
-                    // sophisticated internal DoD game state engine.
-                    if (v.VFTPTR === -1) {
-                        u.calcVFI();
-                    }
-
                     // Check if update is needed
                     if (v.update) {
                         g.clear();
@@ -333,7 +326,8 @@ clearArea(&TXTSTS);
                 var v = dod.game.viewer;
                 var utils = dod.game.utils;
                 var c = dod.game.constants;
-                var a, b, u, x, ftctr, vft;
+                var a, b, u, x, ftctr, vft, vCeiling, vFloor;
+                var origA;
 
                 var level = v.mapLevel;
                 var row = dod.game.state.players[0].row;
@@ -344,7 +338,8 @@ clearArea(&TXTSTS);
 
                 do {
                     v.setScale();
-                    a = dod.game.state.dungeon.levels[level][utils.rc2idx(row, col)];
+                    origA = dod.game.state.dungeon.levels[level][utils.rc2idx(row, col)];
+                    a = origA;
                     u = 0;
                     x = 4;
 
@@ -379,28 +374,27 @@ clearArea(&TXTSTS);
                     // Draw creature shadows here
 
                     // Draw vertical features
-                    vft = utils.vfind(row, col);
-                    if (vft === c.dungeon.VF_NULL) {
-                        v.drawIt(v.CEI_VLA);
-                    } else {
-                        switch (vft) {
-                            case c.dungeon.VF_HOLE_UP:
-                                v.drawIt(v.HUP_VLA);
-                                break;
-                            case c.dungeon.VF_LADDER_UP:
-                                v.drawIt(v.LAD_VLA);
-                                v.drawIt(v.HUP_VLA);
-                                break;
-                            case c.dungeon.VF_HOLE_DOWN:
-                                v.drawIt(v.HDN_VLA);
-                                v.drawIt(v.CEI_VLA);
-                                break;
-                            case c.dungeon.VF_LADDER_DOWN:
-                                v.drawIt(v.LAD_VLA);
-                                v.drawIt(v.HDN_VLA);
-                                v.drawIt(v.CEI_VLA);
-                                break;
-                        }
+                    vft = origA >> 8;
+                    switch (vft) {
+                        case c.dungeon.VF_NONE:
+                            v.drawIt(v.CEI_VLA);
+                            break;
+                        case c.dungeon.VF_HOLE_UP:
+                            v.drawIt(v.HUP_VLA);
+                            break;
+                        case c.dungeon.VF_LADDER_UP:
+                            v.drawIt(v.LAD_VLA);
+                            v.drawIt(v.HUP_VLA);
+                            break;
+                        case c.dungeon.VF_HOLE_DOWN:
+                            v.drawIt(v.HDN_VLA);
+                            v.drawIt(v.CEI_VLA);
+                            break;
+                        case c.dungeon.VF_LADDER_DOWN:
+                            v.drawIt(v.LAD_VLA);
+                            v.drawIt(v.HDN_VLA);
+                            v.drawIt(v.CEI_VLA);
+                            break;
                     }
 
                     ///// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -583,7 +577,6 @@ clearArea(&TXTSTS);
             // for the walk-through. It needs updated to
             // the full version still.
             drawMap: function() {
-                console.log('in draw map');
                 // Locals
                 var g = dod.phaser.graphics;
                 var v = dod.game.viewer;
@@ -672,64 +665,6 @@ clearArea(&TXTSTS);
                         return p.col > 0;
                         break;
                 }
-            },
-
-            vfind: function(row, col) {
-                // Locals
-                var utils = dod.game.utils;
-                var v = dod.game.viewer;
-                var c = dod.game.constants;
-                var u = v.VFTPTR;
-                var a = 0, res;
-
-                res = utils.vfindSub(u, row, col);
-                if (res.found) {
-                    return res.a;
-                }
-
-                res = utils.vfindSub(res.u, row, col);
-                if (res.found) {
-                    return res.a + 2;
-                } else {
-                    return c.dungeon.VF_NULL;
-                }
-            },
-
-            vfindSub: function(u, row, col) {
-                // Locals
-                var vfttab = dod.game.state.dungeon.vfttab;
-                var r, c;
-                var res = {
-                    found: false,
-                    u: u
-                };
-
-                do {
-                    res.a = vfttab[res.u++];
-                    if (res.a === -1) {
-                        return res;
-                    }
-                    r = vfttab[res.u++];
-                    c = vfttab[res.u++];
-                } while ( !((r === row) && (c === col)) );
-                res.found = true;
-                return res;
-            },
-
-            calcVFI: function() {
-                // Locals
-                var vfttab = dod.game.state.dungeon.vfttab;
-                var v = dod.game.viewer;
-                var lvl = v.mapLevel;
-                var idx = 0;
-
-                do {
-                    v.VFTPTR = idx;
-                    while (vfttab[idx++] !== -1) {
-                        ; // Loop !!!
-                    }
-                    --lvl;
-                } while (lvl !== -1);
             }
         },
 
@@ -759,6 +694,52 @@ clearArea(&TXTSTS);
                     position: position,
                     items: []
                 });
+            },
+
+            climbUp: function() {
+                var c = dod.game.constants;
+                var p = dod.game.state.players[0];
+                var v = dod.game.viewer;
+                var map = dod.game.state.dungeon.levels[v.mapLevel];
+                var idx = dod.game.utils.rc2idx(p.row, p.col);
+                var vft = (map[idx] >> 8);
+                if (vft === c.dungeon.VF_HOLE_UP || vft === c.dungeon.VF_LADDER_UP) {
+                    --p.level;
+                    --v.mapLevel; /// Remove this duplication
+                    v.update = true;
+                }
+            },
+
+            climbDown: function() {
+                var c = dod.game.constants;
+                var p = dod.game.state.players[0];
+                var v = dod.game.viewer;
+                var map = dod.game.state.dungeon.levels[v.mapLevel];
+                var idx = dod.game.utils.rc2idx(p.row, p.col);
+                var vft = (map[idx] >> 8);
+                if (vft === c.dungeon.VF_HOLE_DOWN || vft === c.dungeon.VF_LADDER_DOWN) {
+                    ++p.level;
+                    ++v.mapLevel; /// Remove this duplication
+                    v.update = true;
+                }
+            },
+
+            transport: function(key) {
+                var p = dod.game.state.players[0];
+                var v = dod.game.viewer;
+                if (p.level === 2 && key === 'W') {
+                    p.row = 0;
+                    p.col = 0;
+                    ++p.level;
+                    ++v.mapLevel; /// Remove this duplication
+                    v.update = true;
+                } else if (p.level === 3 && key === 'Q') {
+                    p.row = 0;
+                    p.col = 0;
+                    --p.level;
+                    --v.mapLevel; /// Remove this duplication
+                    v.update = true;
+                }
             },
 
             moveForward: function() {
