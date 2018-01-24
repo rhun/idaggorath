@@ -2,7 +2,7 @@
   "name": "idaggorath",
   "version": "1.0.0",
   "description": "iDaggorath Online Game",
-  "main": "index.js",
+  "main": "gameserver/dodserver.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node gameserver/dodserver.js"
