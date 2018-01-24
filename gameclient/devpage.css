@@ -46,11 +46,19 @@ body {
     background-color: silver;
     width: 278px;
     height: 374px;
+    font-size: 12px;
 }
 
 .console {
     margin: 0;
     padding: 5px;
-    background-color: grey;
+    background-color: lightgrey;
     height: 116px;
+}
+
+.warning {
+    color: red;
+    background-color: yellow;
+    font-weight: bold;
+    font-size: 24px;
 }

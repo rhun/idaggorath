@@ -14,11 +14,12 @@ const DodGame = require('./dod/dodgame.js')
 const app = express()
 const server = http.Server(app)
 const io = socketio(server)
-const port = process.env.PORT
+const port = process.env.PORT || 58181
 const root = path.join(__dirname, '../gameclient')
 
 // Start iDaggorath Server
 server.listen(port)
+debug.logServer(`Listening on port: ${port}`)
 app.use(express.static(root));
 
 // Create Daggorath Game

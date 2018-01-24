@@ -14,7 +14,7 @@ Game.prototype = {
         // Init dungeon for walkthrough
         ctr.getDungeon();
         ctr.addPlayer(c.position.CLASSIC_START);
-        v.setMode(c.view.MAP)
+        v.setMode(c.view.PORT)
     },
     create: function() {
         dod.game.control.setBackgroundColor();

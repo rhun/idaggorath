@@ -58,6 +58,12 @@ window.dod = {
                 dod.game.control.transport('W');
             } else if (key === 'Q' || key === 'q') {
                 dod.game.control.transport('Q');
+            } else if (key === 'P' || key === 'p') {
+                v.setTorch('pine');
+            } else if (key === 'L' || key === 'l') {
+                v.setTorch('lunar');
+            } else if (key === 'S' || key === 's') {
+                v.setTorch('solar');
             }
         }
     },
@@ -73,6 +79,24 @@ window.dod = {
                 PORT: 2,
                 EXAMINE: 3,
                 TITLE: 4
+            },
+            torch: {
+                dead: {
+                    r: 0,
+                    m: 0
+                },
+                pine: {
+                    r: 7,
+                    m: 0
+                },
+                lunar: {
+                    r: 10,
+                    m: 4
+                },
+                solar: {
+                    r: 13,
+                    m: 11
+                }
             },
             position: {
                 CLASSIC_START: {
@@ -253,15 +277,23 @@ window.dod = {
                 v.fadeVal = -2;
 
                 // Remove this later
-                v.RLIGHT = 10;
-                v.MLIGHT = 4;
-
+                v.setTorch('pine');
 
 /*
 clearArea(&TXTPRI);
 clearArea(&TXTEXA);
 clearArea(&TXTSTS);
 */
+            },
+            
+            setTorch: function(type) {
+                // Locals
+                var v = dod.game.viewer;
+                var c = dod.game.constants;
+
+                v.RLIGHT = c.torch[type].r;
+                v.MLIGHT = c.torch[type].m;
+                v.update = true;
             },
 
             setVidInv: function(inv) {
@@ -282,12 +314,13 @@ clearArea(&TXTSTS);
                 var v = dod.game.viewer;
                 var c = dod.game.constants;
                 var p = dod.game.state.players[0];
+                var level = p ? p.level : 0;
                 if (v.mode !== mode) {
                     v.mode = mode;
                     if (mode === c.view.MAP) {
                         v.setVidInv(false);
                     } else {
-                        v.setVidInv(p.level % 2 === 1);
+                        v.setVidInv(level % 2 === 1);
                     }
                     v.update = true;
                 }
