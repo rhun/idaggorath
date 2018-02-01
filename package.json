@@ -23,11 +23,12 @@
   "dependencies": {
     "express": "^4.16.2",
     "jquery.terminal": "^1.11.3",
+    "mongodb": "^3.0.2",
     "socket.io": "^2.0.4",
     "underscore": "^1.8.3"
   },
   "devDependencies": {},
   "env": {
-      "PORT": 58181
+    "PORT": 58181
   }
 }
